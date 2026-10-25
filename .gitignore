@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment Variables & Secrets
+.env
+*.env
+!.env.example
+*credentials*.json
+
+# Databases
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Build outputs
+dist/
+*/dist/
+.vite/
+*/.vite/
+
+# Archives & Temporary files
+*.zip
+*.tar.gz
+*.xlsx
+.DS_Store
+Thumbs.db
+scratch/
+

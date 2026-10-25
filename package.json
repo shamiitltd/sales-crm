@@ -1,0 +1,12 @@
+{
+  "name": "sales-crm-shamiit",
+  "version": "1.0.0",
+  "description": "Sales CRM - a product of SHAMIIT LLP",
+  "scripts": {
+    "server": "npm --prefix server start",
+    "client": "npm --prefix client dev",
+    "build:client": "npm --prefix client run build"
+  },
+  "author": "SHAMIIT LLP",
+  "license": "ISC"
+}

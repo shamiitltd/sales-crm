@@ -1,0 +1,29 @@
+{
+  "name": "sales-crm-server",
+  "version": "1.0.0",
+  "description": "Sales Follow-Up CRM Backend - SHAMIIT LLP",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [
+    "sales",
+    "crm",
+    "sqlite",
+    "google-drive"
+  ],
+  "author": "SHAMIIT LLP",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^11.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "googleapis": "^144.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1",
+    "xlsx": "^0.18.5"
+  }
+}
