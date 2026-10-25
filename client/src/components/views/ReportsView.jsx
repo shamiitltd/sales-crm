@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, Download, TrendingUp, Target, Users, ShieldCheck } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { formatINR } from '../../utils/formatters';
 
 export default function ReportsView({ stats, onExportExcel }) {

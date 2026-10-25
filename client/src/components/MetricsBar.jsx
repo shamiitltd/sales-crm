@@ -1,11 +1,8 @@
 import React from 'react';
 import {
   Users,
-  Calendar,
   IndianRupee,
   Target,
-  ArrowUpRight,
-  Sparkles,
   TrendingUp,
   Clock
 } from 'lucide-react';

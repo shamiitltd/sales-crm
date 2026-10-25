@@ -11,7 +11,6 @@ import {
   Eye,
   EyeOff,
   Cloud,
-  CheckCircle2,
   Sun,
   Moon
 } from 'lucide-react';

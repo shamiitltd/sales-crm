@@ -3,7 +3,6 @@ import {
   Search,
   Filter,
   ArrowUpDown,
-  Calendar,
   Clock,
   Phone,
   Mail,
@@ -13,8 +12,6 @@ import {
   ChevronDown,
   AlertCircle,
   CalendarPlus,
-  IndianRupee,
-  MoreVertical,
   Check,
   FileText
 } from 'lucide-react';

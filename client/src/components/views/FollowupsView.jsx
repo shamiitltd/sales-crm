@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Clock, Calendar, CheckCircle2, Phone, Mail, AlertCircle, CalendarPlus, Check } from 'lucide-react';
+import { Clock, Calendar, CheckCircle2, Phone, CalendarPlus, Check } from 'lucide-react';
 import { formatINR, STAGE_CONFIG, getFollowupUrgency } from '../../utils/formatters';
 
 export default function FollowupsView({ leads = [], onSelectLead, onUpdateLead }) {

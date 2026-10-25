@@ -4,8 +4,7 @@ import {
   Users,
   Target,
   Bell,
-  ArrowUpRight,
-  AlertCircle
+  ArrowUpRight
 } from 'lucide-react';
 import { formatINR } from '../utils/formatters';
 

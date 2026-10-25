@@ -344,7 +344,7 @@ export default function LeadModal({
 
     try {
       // E.164 compliance: Strip whitespace, hyphens, and parentheses on submit
-      const sanitizedPhone = (formData.contact_number || '').replace(/[\s\-\(\)]/g, '').trim();
+      const sanitizedPhone = (formData.contact_number || '').replace(/[\s\-()]/g, '').trim();
 
       const payload = {
         ...formData,

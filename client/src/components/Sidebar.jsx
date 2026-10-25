@@ -9,7 +9,6 @@ import {
   FileSpreadsheet,
   BarChart3,
   Settings,
-  Sparkles,
   Trash2
 } from 'lucide-react';
 
@@ -57,9 +56,9 @@ export default function Sidebar({
         {/* Brand Header */}
         <div className="h-16 px-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 p-0.5 shadow-md shadow-blue-500/20 flex items-center justify-center shrink-0">
-              <div className="w-full h-full bg-white dark:bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 p-0.5 shadow-md shadow-blue-500/20 flex items-center justify-center shrink-0 overflow-hidden">
+              <div className="w-full h-full bg-white dark:bg-slate-950 rounded-[10px] flex items-center justify-center p-0.5">
+                <img src="/logo.png" alt="SHAMIIT LLP" className="w-full h-full object-contain rounded-[8px]" />
               </div>
             </div>
             <div>

@@ -1,13 +1,9 @@
 import React from 'react';
 import {
   Phone,
-  Mail,
-  Calendar,
-  Edit2,
   Trash2,
   CheckCircle2,
   ChevronDown,
-  AlertCircle,
   FileText
 } from 'lucide-react';
 import {

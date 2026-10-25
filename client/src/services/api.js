@@ -81,3 +81,5 @@ export const api = {
     return activeToken ? `/api/auth/google?token=${encodeURIComponent(activeToken)}` : '/api/auth/google';
   }
 };
+
+export default api;

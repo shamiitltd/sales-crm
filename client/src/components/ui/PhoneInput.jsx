@@ -43,7 +43,7 @@ export default function PhoneInput({
     setSelectedCountryCode(parsed.country.code);
     setNationalNumber(parsed.nationalNumber);
     setDisplayValue(parsed.formattedNumber);
-  }, [value]);
+  }, [value, selectedCountryCode]);
 
   const currentCountry =
     COUNTRIES.find((c) => c.code === selectedCountryCode) ||

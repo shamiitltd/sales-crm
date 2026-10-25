@@ -90,7 +90,9 @@ export default function KanbanBoard({
         targetLeadId = data.id || targetLeadId;
         sourceStage = data.stage;
       }
-    } catch {}
+    } catch {
+      // Fallback to text/plain below
+    }
 
     if (!targetLeadId) {
       targetLeadId = e.dataTransfer.getData('text/plain');

@@ -1,10 +1,10 @@
 import React from 'react';
-import { Settings, Cloud, User, Key, Database, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Cloud, User, Database, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function SettingsView({ onOpenGoogleModal }) {
-  const { user, googleDrive, refreshDriveStatus } = useAuth();
+  const { user, googleDrive } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const isConnected = Boolean(googleDrive?.isConnected);

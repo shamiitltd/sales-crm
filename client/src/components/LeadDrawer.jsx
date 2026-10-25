@@ -1,18 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   X,
-  Building,
-  Phone,
   Mail,
-  Calendar,
-  IndianRupee,
   Save,
   Trash2,
-  Clock,
   CheckCircle2,
-  Plus,
   Send,
-  MessageSquare,
   PhoneCall,
   Video,
   FileText,
@@ -26,7 +19,6 @@ import CustomDatePicker from './ui/CustomDatePicker';
 import PhoneInput from './ui/PhoneInput';
 import {
   sanitizePhoneInput,
-  getPhoneDigits,
   validatePhone,
   validateEmail,
   validateClientName,
@@ -72,6 +64,24 @@ export default function LeadDrawer({
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
 
+  const loadActivities = useCallback(async (leadId) => {
+    try {
+      const data = await api.getLeadActivities(leadId, token);
+      setActivities(data || []);
+    } catch (e) {
+      console.error('Error loading activities:', e);
+    }
+  }, [token]);
+
+  const loadTasks = useCallback(async (leadId) => {
+    try {
+      const data = await api.getTasks({ leadId }, token);
+      setTasks(data || []);
+    } catch (e) {
+      console.error('Error loading tasks:', e);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (lead) {
       setFormData({
@@ -89,25 +99,7 @@ export default function LeadDrawer({
       loadActivities(lead.id);
       loadTasks(lead.id);
     }
-  }, [lead]);
-
-  const loadActivities = async (leadId) => {
-    try {
-      const data = await api.getLeadActivities(leadId, token);
-      setActivities(data || []);
-    } catch (e) {
-      console.error('Error loading activities:', e);
-    }
-  };
-
-  const loadTasks = async (leadId) => {
-    try {
-      const data = await api.getTasks({ leadId }, token);
-      setTasks(data || []);
-    } catch (e) {
-      console.error('Error loading tasks:', e);
-    }
-  };
+  }, [lead, loadActivities, loadTasks]);
 
   const [errors, setErrors] = useState({});
 
@@ -209,7 +201,7 @@ export default function LeadDrawer({
         ...formData,
         client_name: (formData.client_name || '').trim(),
         company: (formData.company || '').trim(),
-        contact_number: (formData.contact_number || '').replace(/[\s\-\(\)]/g, '').trim(),
+        contact_number: (formData.contact_number || '').replace(/[\s\-()]/g, '').trim(),
         email: (formData.email || '').trim(),
         deal_value: Number(formData.deal_value) || 0,
         notes: (formData.notes || '').trim()

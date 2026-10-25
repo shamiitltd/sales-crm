@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
@@ -29,7 +29,7 @@ import { BarChart3, Loader2, AlertTriangle } from 'lucide-react';
 import { useSyncStatus } from './hooks/useSyncStatus';
 
 function MainCRM() {
-  const { token, user, refreshDriveStatus } = useAuth();
+  const { token, refreshDriveStatus } = useAuth();
 
   // Toast
   const [toast, setToast] = useState(null);
@@ -125,7 +125,7 @@ function MainCRM() {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, selectedStage, selectedPriority, token]);
+  }, [searchTerm, selectedStage, selectedPriority, token, showToast]);
 
   // Initial and refresh trigger
   useEffect(() => {

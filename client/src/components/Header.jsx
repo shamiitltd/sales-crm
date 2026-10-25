@@ -10,10 +10,7 @@ import {
   LogOut,
   User,
   Download,
-  Key,
-  ShieldCheck,
-  RefreshCw,
-  FolderOpen
+  RefreshCw
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';

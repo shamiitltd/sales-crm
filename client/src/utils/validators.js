@@ -241,12 +241,10 @@ export function validateE164Phone(phoneOrE164, { countryCode = 'IN', required = 
     COUNTRIES[0];
 
   // Extract pure national digits
-  let nationalDigits = '';
-  if (country.dialCode !== '+' && str.startsWith(country.dialCode)) {
-    nationalDigits = str.slice(country.dialCode.length).replace(/\D/g, '');
-  } else {
-    nationalDigits = str.replace(/\D/g, '');
-  }
+  const nationalDigits =
+    country.dialCode !== '+' && str.startsWith(country.dialCode)
+      ? str.slice(country.dialCode.length).replace(/\D/g, '')
+      : str.replace(/\D/g, '');
 
   if (!nationalDigits) {
     return {
@@ -323,8 +321,8 @@ export function sanitizePhoneInput(raw) {
         cleaned += char;
         digitCount++;
       }
-    } else if (/[\s\-]/.test(char)) {
-      if (cleaned.length > 0 && !/[\s\-]/.test(cleaned[cleaned.length - 1])) {
+    } else if (/[\s-]/.test(char)) {
+      if (cleaned.length > 0 && !/[\s-]/.test(cleaned[cleaned.length - 1])) {
         cleaned += char;
       }
     }
@@ -403,7 +401,7 @@ export function validateClientName(name) {
   }
 
   // Check that it's not purely numbers or punctuation
-  if (/^[^a-zA-Z\u0900-\u097F]+$/.test(clean)) {
+  if (/^[^\p{L}]+$/u.test(clean)) {
     return {
       isValid: false,
       error: 'Client name must include letters.'

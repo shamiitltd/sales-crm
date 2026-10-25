@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Building, Search, Phone, Mail, ArrowUpRight, Plus, FolderKanban } from 'lucide-react';
+import { Building, Search, Plus } from 'lucide-react';
 import { formatINR, STAGE_CONFIG } from '../../utils/formatters';
 
 export default function CompaniesView({ leads = [], onSelectLead, onOpenAddModal }) {

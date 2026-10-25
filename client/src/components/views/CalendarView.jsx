@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, Building, Plus } from 'lucide-react';
-import { formatINR, STAGE_CONFIG } from '../../utils/formatters';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
-export default function CalendarView({ leads = [], onSelectLead, onOpenAddModal }) {
+export default function CalendarView({ leads = [], onSelectLead }) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const year = currentDate.getFullYear();

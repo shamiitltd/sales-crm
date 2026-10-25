@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Trash2, RotateCcw, AlertTriangle, AlertCircle, Loader2, Building, Phone, Mail, Calendar } from 'lucide-react';
+import { Trash2, RotateCcw, Loader2, Building, Phone, Mail, Calendar } from 'lucide-react';
 import { api } from '../../services/api';
 
 export default function TrashView({ token, onRestoreSuccess, onPermanentDeleteSuccess, onToast }) {

@@ -67,7 +67,7 @@ export function useSyncStatus(token, onToast = null) {
         }
         prevStateRef.current = data;
       }
-    } catch (err) {
+    } catch {
       // Silently catch polling blips
     }
   }, [token, isOnline, onToast]);

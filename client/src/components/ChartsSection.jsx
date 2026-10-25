@@ -12,7 +12,7 @@ import {
   CartesianGrid
 } from 'recharts';
 import { useTheme } from '../context/ThemeContext';
-import { formatCompactINR, formatINR } from '../utils/formatters';
+import { formatINR } from '../utils/formatters';
 
 const STAGE_COLORS = {
   'New': '#2563EB',

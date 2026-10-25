@@ -2,17 +2,14 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   Building,
-  User,
   Phone,
   Mail,
   Calendar,
   IndianRupee,
-  FileText,
   CheckCircle2,
   AlertCircle,
   Check
 } from 'lucide-react';
-import { STATUS_CONFIG } from '../utils/formatters';
 import {
   sanitizePhoneInput,
   getPhoneDigits,

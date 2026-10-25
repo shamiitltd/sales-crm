@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, FileText, Send, Sparkles } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 
 const TEMPLATES = [
   {
