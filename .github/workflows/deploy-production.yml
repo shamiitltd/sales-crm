@@ -1,0 +1,296 @@
+# ==============================================================================
+# GitHub Actions Production Deployment Workflow for SHAMIIT Sales CRM
+# Domain: crm.shamiit.com
+# Target: Hostinger VPS
+# ==============================================================================
+
+name: Deploy Sales CRM to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # ============================================================================
+  # JOB 1: Static Validation & Syntax Checks
+  # ============================================================================
+  validate:
+    name: Validate Codebase
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js (20.x LTS)
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5a1 # v4.1.0
+        with:
+          node-version: 20.x
+          cache: npm
+          cache-dependency-path: |
+            client/package-lock.json
+            server/package-lock.json
+
+      - name: Install Client Dependencies
+        run: npm ci --prefix client
+
+      - name: Lint Frontend
+        run: npm run lint --prefix client
+
+      - name: Install Server Dependencies (Validation Only)
+        run: npm ci --prefix server --ignore-scripts
+
+      - name: Validate Server Syntax
+        run: |
+          node --check server/index.js
+          node --check server/server.js
+          node --check server/db/database.js
+          node --check server/db/cloudAuthDb.js
+          node --check ecosystem.config.cjs
+
+  # ============================================================================
+  # JOB 2: Build Frontend & Package Release Artifact
+  # ============================================================================
+  build-and-package:
+    name: Build & Package Release
+    needs: [validate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js (20.x LTS)
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5a1 # v4.1.0
+        with:
+          node-version: 20.x
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: npm ci --prefix client
+
+      - name: Build Frontend Production Bundle
+        run: npm run build --prefix client
+
+      - name: Verify Frontend Build Output
+        run: |
+          if [ ! -f "client/dist/index.html" ]; then
+            echo "[-] Error: Expected build output client/dist/index.html does not exist!"
+            exit 1
+          fi
+          echo "[+] Verified client/dist/index.html exists."
+
+      - name: Assemble Release Bundle
+        run: |
+          mkdir -p release_package
+          
+          # Copy compiled frontend dist
+          mkdir -p release_package/client
+          cp -r client/dist release_package/client/
+
+          # Copy backend source files (excluding sensitive local data)
+          mkdir -p release_package/server
+          rsync -av \
+            --exclude='node_modules' \
+            --exclude='.env*' \
+            --exclude='*.db*' \
+            --exclude='tests' \
+            --exclude='*.log' \
+            server/ release_package/server/
+
+          # Copy process manager and helper scripts
+          cp ecosystem.config.cjs release_package/
+          cp package.json release_package/
+          cp -r scripts release_package/
+          chmod +x release_package/scripts/*.sh
+
+          # Create compressed deployment archive
+          tar -czf "release-${{ github.sha }}.tar.gz" -C release_package .
+          ls -lh "release-${{ github.sha }}.tar.gz"
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: release-bundle
+          path: "release-${{ github.sha }}.tar.gz"
+          retention-days: 1
+          if-no-files-found: error
+
+  # ============================================================================
+  # JOB 3: Atomic SSH Deployment to VPS
+  # ============================================================================
+  deploy:
+    name: Deploy to Hostinger VPS
+    needs: [build-and-package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://crm.shamiit.com
+
+    steps:
+      - name: Checkout Repository for Deployment Scripts
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Download Release Artifact
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: release-bundle
+
+      - name: Setup SSH Authentication
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_SSH_PORT || '22' }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # Strict host key verification
+          if [ -n "$VPS_KNOWN_HOSTS" ]; then
+            echo "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
+          chmod 644 ~/.ssh/known_hosts
+
+          # Store private key safely
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Transfer Release Artifact & Deployment Scripts
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_SSH_PORT || '22' }}
+          APP_PATH: ${{ secrets.VPS_APP_PATH || '/var/www/sales-crm' }}
+        run: |
+          REMOTE_TAR="/tmp/release-${{ github.sha }}.tar.gz"
+          scp -i ~/.ssh/deploy_key -P "$VPS_PORT" "release-${{ github.sha }}.tar.gz" "${VPS_USER}@${VPS_HOST}:${REMOTE_TAR}"
+
+      - name: Execute Atomic Deployment on VPS
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_SSH_PORT || '22' }}
+          APP_PATH: ${{ secrets.VPS_APP_PATH || '/var/www/sales-crm' }}
+        run: |
+          RELEASE_ID="$(date -u +'%Y%m%d%H%M%S')-${GITHUB_SHA::7}"
+          REMOTE_TAR="/tmp/release-${{ github.sha }}.tar.gz"
+
+          # Stream deployment script to remote server
+          ssh -i ~/.ssh/deploy_key -p "$VPS_PORT" "${VPS_USER}@${VPS_HOST}" \
+            "bash -s" -- "$APP_PATH" "$RELEASE_ID" "$REMOTE_TAR" < scripts/deploy.sh
+
+  # ============================================================================
+  # JOB 4: Production Health Check & Automated Rollback
+  # ============================================================================
+  verify-health:
+    name: Verify Production Health
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code for Emergency Rollback Script
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup SSH for Emergency Rollback
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_SSH_PORT || '22' }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          if [ -n "$VPS_KNOWN_HOSTS" ]; then
+            echo "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
+          chmod 644 ~/.ssh/known_hosts
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Probe Production Frontend & API Health
+        id: health_check
+        run: |
+          DOMAIN="crm.shamiit.com"
+          HEALTH_URL="https://${DOMAIN}/api/health"
+          FRONTEND_URL="https://${DOMAIN}"
+
+          echo "=========================================================="
+          echo " Probing Production URLs"
+          echo " Frontend: ${FRONTEND_URL}"
+          echo " Health:   ${HEALTH_URL}"
+          echo "=========================================================="
+
+          MAX_ATTEMPTS=12
+          ATTEMPT=0
+          API_HEALTHY=0
+          FRONTEND_HEALTHY=0
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            echo "[.] Health verification attempt ${ATTEMPT}/${MAX_ATTEMPTS}..."
+
+            # 1. Check API endpoint
+            API_RESP=$(curl -s -m 10 -w "\n%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")
+            API_CODE=$(echo "$API_RESP" | tail -n1)
+            API_BODY=$(echo "$API_RESP" | sed '$d')
+
+            # 2. Check Frontend homepage
+            FRONT_CODE=$(curl -s -o /dev/null -m 10 -w "%{http_code}" "$FRONTEND_URL" 2>/dev/null || echo "000")
+
+            echo "    -> API Status:      HTTP ${API_CODE}"
+            echo "    -> Frontend Status: HTTP ${FRONT_CODE}"
+
+            if [ "$API_CODE" = "200" ] && echo "$API_BODY" | grep -q '"status":"online"'; then
+              API_HEALTHY=1
+            fi
+
+            if [ "$FRONT_CODE" = "200" ] || [ "$FRONT_CODE" = "304" ]; then
+              FRONTEND_HEALTHY=1
+            fi
+
+            if [ $API_HEALTHY -eq 1 ] && [ $FRONTEND_HEALTHY -eq 1 ]; then
+              echo "[+] Production health checks fully PASSED on attempt ${ATTEMPT}!"
+              echo "    API Response Payload: ${API_BODY}"
+              break
+            fi
+
+            sleep 5
+          done
+
+          if [ $API_HEALTHY -ne 1 ] || [ $FRONTEND_HEALTHY -ne 1 ]; then
+            echo "[-] ERROR: Production health verification failed after ${MAX_ATTEMPTS} attempts."
+            echo "    API Health:      ${API_HEALTHY} (expected 1)"
+            echo "    Frontend Health: ${FRONTEND_HEALTHY} (expected 1)"
+            exit 1
+          fi
+
+      - name: Automated Rollback on Failure
+        if: failure()
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_SSH_PORT || '22' }}
+          APP_PATH: ${{ secrets.VPS_APP_PATH || '/var/www/sales-crm' }}
+        run: |
+          echo "[!] TRIGGERING AUTOMATED ROLLBACK ON VPS..."
+          ssh -i ~/.ssh/deploy_key -p "$VPS_PORT" "${VPS_USER}@${VPS_HOST}" \
+            "bash -s" -- "$APP_PATH" < scripts/rollback.sh

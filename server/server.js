@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 
 // Initialize database
-require('./db/database');
+const dbLocal = require('./db/database');
 const cloudAuthDb = require('./db/cloudAuthDb');
 cloudAuthDb.initCloudDb().catch((err) => {
   console.warn('[Server] Cloud Auth DB initialization note:', err.message);
@@ -22,11 +22,38 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// API Health Check
-app.get('/api/health', (req, res) => {
+// API Health Check with safe database verification
+app.get('/api/health', async (req, res) => {
+  let dbStatus = 'healthy';
+  let dbEngine = 'sqlite';
+
+  try {
+    if (cloudAuthDb.isConfigured()) {
+      dbEngine = 'postgresql';
+      await cloudAuthDb.query('SELECT 1 AS health_check');
+    } else {
+      dbLocal.prepare('SELECT 1 AS health_check').get();
+    }
+  } catch (err) {
+    dbStatus = 'unhealthy';
+    return res.status(503).json({
+      status: 'degraded',
+      product: 'Sales CRM - a product of SHAMIIT LLP',
+      database: {
+        engine: dbEngine,
+        status: dbStatus
+      },
+      timestamp: new Date().toISOString()
+    });
+  }
+
   res.json({
     status: 'online',
     product: 'Sales CRM - a product of SHAMIIT LLP',
+    database: {
+      engine: dbEngine,
+      status: dbStatus
+    },
     timestamp: new Date().toISOString()
   });
 });

@@ -72,6 +72,24 @@ export default function LeadDrawer({
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
 
+  const loadActivities = async (leadId) => {
+    try {
+      const data = await api.getLeadActivities(leadId, token);
+      setActivities(data || []);
+    } catch (e) {
+      console.error('Error loading activities:', e);
+    }
+  };
+
+  const loadTasks = async (leadId) => {
+    try {
+      const data = await api.getTasks({ leadId }, token);
+      setTasks(data || []);
+    } catch (e) {
+      console.error('Error loading tasks:', e);
+    }
+  };
+
   useEffect(() => {
     if (lead) {
       setFormData({
@@ -90,24 +108,6 @@ export default function LeadDrawer({
       loadTasks(lead.id);
     }
   }, [lead]);
-
-  const loadActivities = async (leadId) => {
-    try {
-      const data = await api.getLeadActivities(leadId, token);
-      setActivities(data || []);
-    } catch (e) {
-      console.error('Error loading activities:', e);
-    }
-  };
-
-  const loadTasks = async (leadId) => {
-    try {
-      const data = await api.getTasks({ leadId }, token);
-      setTasks(data || []);
-    } catch (e) {
-      console.error('Error loading tasks:', e);
-    }
-  };
 
   const [errors, setErrors] = useState({});
 
